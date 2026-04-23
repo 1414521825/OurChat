@@ -2,6 +2,7 @@ import { ChatMessage } from '../models/ChatMessageModel';
 import ChatDetailViewModel from '../viewmodels/ChatDetailViewModel';
 import { router } from '@kit.ArkUI';
 import { ChatInputArea } from '../views/ChatInputArea';
+import { ChatBubble } from '../views/ChatBubble';
 
 @Entry
 @Component
@@ -9,11 +10,14 @@ struct ChatDetail {
   // 1. 先赋初始值
   @State contactName: string = '聊天';
   @State contactId: string = '';
-
   @State messageList: ChatMessage[] = [];
   @State inputText: string = '';
   @State isLoading: boolean = true;
   @State isSending: boolean = false;
+  @State isAtBottom: boolean = false;
+  @State unreadCount: number = 0;
+
+  private scroller: Scroller = new Scroller();
 
   aboutToAppear() {
     // 2. 使用官方推荐的上下文路由获取参数 (告别删除线！)
@@ -36,6 +40,10 @@ struct ChatDetail {
     let data = await ChatDetailViewModel.getHistoryMessages(this.contactId);
     this.messageList = [...data];
     this.isLoading = false;
+
+    setTimeout(() => {
+      this.scroller.scrollEdge(Edge.Bottom)
+    }, 100)
   }
 
   // 【修改】变成异步发送方法
@@ -54,6 +62,14 @@ struct ChatDetail {
     // 把新消息塞进数组里，触发 UI 刷新
     this.messageList.push(newMessage);
     this.isSending = false;
+
+    // 🌟【新增】让列表滚动到最底部
+    // 💡 架构师细节：这里用 setTimeout 延迟 100 毫秒，是因为 push 数据后，
+    // ArkUI 需要一瞬间的时间去把新气泡“画”到屏幕上。画完之后再滚，才能完美触底。
+    setTimeout(() => {
+      this.scroller.scrollEdge(Edge.Bottom)
+      this.unreadCount = 0;
+    }, 100)
   }
 
   build() {
@@ -88,38 +104,41 @@ struct ChatDetail {
         .layoutWeight(1)
         .justifyContent(FlexAlign.Center)
       } else {
-        List({ space: 20 }) {
-          ForEach(this.messageList, (item: ChatMessage) => {
-            ListItem() {
-              Row() {
-                if (item.senderId === 'me') {
-                  // 【我发的消息：靠右】
-                  Blank()
-                  Text(item.text)
-                    .backgroundColor('#007DFF')
-                    .fontColor(Color.White)
-                    .padding(12)
-                    .borderRadius({ topLeft: 10, topRight: 10, bottomLeft: 10, bottomRight: 0 })
-                } else {
-                  // 【对方的消息：靠左】
-                  Circle({ width: 40, height: 40 }).fill('#E0E0E0').margin({ right: 10 })
-                  Text(item.text)
-                    .backgroundColor('#F1F3F5')
-                    .fontColor(Color.Black)
-                    .padding(12)
-                    .borderRadius({ topLeft: 10, topRight: 10, bottomLeft: 0, bottomRight: 10 })
-                  Blank()
-                }
+        Stack({alignContent: Alignment.BottomEnd}) {
+          List({ space: 20 , scroller: this.scroller}) {
+            ForEach(this.messageList, (item: ChatMessage) => {
+              ListItem() {
+                ChatBubble({message: item})
               }
-              .width('100%')
-              .padding({ left: 15, right: 15 })
+            }, (item: ChatMessage) => item.id)
+          }
+          .width('100%')
+          .height('100%')
+          .padding({ top: 10, bottom: 10 })
+          .onScrollIndex((firstIndex: number, lastIndex: number) => {
+            this.isAtBottom = (lastIndex >= this.messageList.length - 1);
+            if (this.isAtBottom) {
+              this.unreadCount = 0; // 到底部了，清空提示
             }
-          }, (item: ChatMessage) => item.id)
+          })
+          // 👈 [新增] 悬浮按钮：只有不在底部，且有新消息时才显示
+          if (!this.isAtBottom && this.unreadCount > 0) {
+            Button(`↓ ${this.unreadCount} 条新消息`)
+              .height(32)
+              .fontSize(14)
+              .backgroundColor(Color.White)
+              .fontColor('#007DFF')
+              .border({ width: 1, color: '#007DFF', radius: 16 })
+              .margin({ bottom: 20, right: 20 })
+              .shadow({ radius: 5, color: 'rgba(0,0,0,0.1)' })
+              .onClick(() => {
+                this.scroller.scrollEdge(Edge.Bottom);
+              })
+          }
         }
         .width('100%')
         .layoutWeight(1)
         .backgroundColor('#FFFFFF')
-        .padding({ top: 10, bottom: 10 })
       }
 
       // --- 3. 底部输入区 ---

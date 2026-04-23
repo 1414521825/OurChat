@@ -10,7 +10,17 @@ class ChatService {
         resolve([
           new ChatMessage('1', contactId, '你好呀！很高兴认识你~'),
           new ChatMessage('2', 'me', '你好！我是刚刚匹配的。'),
-          new ChatMessage('3', contactId, '今天天气不错，你平时喜欢做什么？')
+          new ChatMessage('3', contactId, '今天天气不错，你平时喜欢做什么？'),
+          new ChatMessage('4', contactId, '你好呀！很高兴认识你~'),
+          new ChatMessage('5', 'me', '你好！我是刚刚匹配的。'),
+          new ChatMessage('6', contactId, '今天天气不错，你平时喜欢做什么？'),
+          new ChatMessage('7', contactId, '你好呀！很高兴认识你~'),
+          new ChatMessage('8', 'me', '你好！我是刚刚匹配的。'),
+          new ChatMessage('9', contactId, '今天天气不错，你平时喜欢做什么？'),
+          new ChatMessage('10', contactId, '你好呀！很高兴认识你~'),
+          new ChatMessage('11', 'me', '你好！我是刚刚匹配的。'),
+          new ChatMessage('12', contactId, '今天天气不错，你平时喜欢做什么？'),
+
         ]);
       }, 500);
     });
