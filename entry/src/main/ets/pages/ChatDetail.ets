@@ -4,9 +4,8 @@ import { router } from '@kit.ArkUI';
 import { ChatInputArea } from '../views/ChatInputArea';
 import { ChatBubble } from '../views/ChatBubble';
 
-@Entry
 @Component
-struct ChatDetail {
+export struct ChatDetail {
   // 1. 先赋初始值
   @State contactName: string = '聊天';
   @State contactId: string = '';
@@ -17,21 +16,10 @@ struct ChatDetail {
   @State isAtBottom: boolean = false;
   @State unreadCount: number = 0;
 
+  // 🌟 核心 1：接收路由栈
+  @Consume('pageStack') pageStack: NavPathStack;
+
   private scroller: Scroller = new Scroller();
-
-  aboutToAppear() {
-    // 2. 使用官方推荐的上下文路由获取参数 (告别删除线！)
-    let params = this.getUIContext().getRouter().getParams() as Record<string, string>;
-
-    // 3. 安全赋值
-    if (params) {
-      this.contactName = params['name'] || '聊天';
-      this.contactId = params['id'] || '';
-    }
-
-    // 4. 继续加载历史记录
-    this.loadHistory();
-  }
 
   // 【新增】异步加载历史记录
   async loadHistory() {
@@ -73,84 +61,100 @@ struct ChatDetail {
   }
 
   build() {
-    Column() {
-      // --- 1. 顶部导航栏 ---
-      Row() {
-        Text('〈 返回')
-          .fontSize(16)
-          .fontColor('#007DFF')
-          .padding(10)
-          .onClick(() => { router.back(); })
+    NavDestination() {
+      Column() {
+        // --- 1. 顶部导航栏 ---
+        Row() {
+          Text('〈 返回')
+            .fontSize(16)
+            .fontColor('#007DFF')
+            .padding(10)
+            .onClick(() => {
+              // 🌟 核心 3：使用 pop() 返回上一页
+              this.pageStack.pop();
+            })
 
-        Text(this.contactName)
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .layoutWeight(1)
-          .textAlign(TextAlign.Center)
-          .margin({ right: 50 }) // 稍微占位居中
-      }
-      .width('100%')
-      .height(60)
-      .backgroundColor('#F8F8F8')
-
-      // --- 2. 聊天记录列表区 ---
-      // 根据加载状态决定显示内容
-      if (this.isLoading) {
-        Column() {
-          LoadingProgress().width(40).height(40).color('#007DFF')
-          Text('正在加载聊天记录...').fontSize(14).fontColor('#999999').margin({ top: 10 })
+          Text(this.contactName)
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .layoutWeight(1)
+            .textAlign(TextAlign.Center)
+            .margin({ right: 50 }) // 稍微占位居中
         }
         .width('100%')
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
-      } else {
-        Stack({alignContent: Alignment.BottomEnd}) {
-          List({ space: 20 , scroller: this.scroller}) {
-            ForEach(this.messageList, (item: ChatMessage) => {
-              ListItem() {
-                ChatBubble({message: item})
-              }
-            }, (item: ChatMessage) => item.id)
+        .height(60)
+        .backgroundColor('#F8F8F8')
+
+        // --- 2. 聊天记录列表区 ---
+        // 根据加载状态决定显示内容
+        if (this.isLoading) {
+          Column() {
+            LoadingProgress().width(40).height(40).color('#007DFF')
+            Text('正在加载聊天记录...').fontSize(14).fontColor('#999999').margin({ top: 10 })
           }
           .width('100%')
-          .height('100%')
-          .padding({ top: 10, bottom: 10 })
-          .onScrollIndex((firstIndex: number, lastIndex: number) => {
-            this.isAtBottom = (lastIndex >= this.messageList.length - 1);
-            if (this.isAtBottom) {
-              this.unreadCount = 0; // 到底部了，清空提示
+          .layoutWeight(1)
+          .justifyContent(FlexAlign.Center)
+        } else {
+          Stack({ alignContent: Alignment.BottomEnd }) {
+            List({ space: 20, scroller: this.scroller }) {
+              ForEach(this.messageList, (item: ChatMessage) => {
+                ListItem() {
+                  ChatBubble({ message: item })
+                }
+              }, (item: ChatMessage) => item.id)
             }
-          })
-          // 👈 [新增] 悬浮按钮：只有不在底部，且有新消息时才显示
-          if (!this.isAtBottom && this.unreadCount > 0) {
-            Button(`↓ ${this.unreadCount} 条新消息`)
-              .height(32)
-              .fontSize(14)
-              .backgroundColor(Color.White)
-              .fontColor('#007DFF')
-              .border({ width: 1, color: '#007DFF', radius: 16 })
-              .margin({ bottom: 20, right: 20 })
-              .shadow({ radius: 5, color: 'rgba(0,0,0,0.1)' })
-              .onClick(() => {
-                this.scroller.scrollEdge(Edge.Bottom);
-              })
-          }
-        }
-        .width('100%')
-        .layoutWeight(1)
-        .backgroundColor('#FFFFFF')
-      }
+            .width('100%')
+            .height('100%')
+            .padding({ top: 10, bottom: 10 })
+            .onScrollIndex((firstIndex: number, lastIndex: number) => {
+              this.isAtBottom = (lastIndex >= this.messageList.length - 1);
+              if (this.isAtBottom) {
+                this.unreadCount = 0; // 到底部了，清空提示
+              }
+            })
 
-      // --- 3. 底部输入区 ---
-      ChatInputArea({
-        inputText: $inputText,
-        isSending: this.isSending,
-        onSend: () => {
-          this.handleSend();
+            // 👈 [新增] 悬浮按钮：只有不在底部，且有新消息时才显示
+            if (!this.isAtBottom && this.unreadCount > 0) {
+              Button(`↓ ${this.unreadCount} 条新消息`)
+                .height(32)
+                .fontSize(14)
+                .backgroundColor(Color.White)
+                .fontColor('#007DFF')
+                .border({ width: 1, color: '#007DFF', radius: 16 })
+                .margin({ bottom: 20, right: 20 })
+                .shadow({ radius: 5, color: 'rgba(0,0,0,0.1)' })
+                .onClick(() => {
+                  this.scroller.scrollEdge(Edge.Bottom);
+                })
+            }
+          }
+          .width('100%')
+          .layoutWeight(1)
+          .backgroundColor('#FFFFFF')
         }
-      })
+
+        // --- 3. 底部输入区 ---
+        ChatInputArea({
+          inputText: $inputText,
+          isSending: this.isSending,
+          onSend: () => {
+            this.handleSend();
+          }
+        })
+      }
+      .width('100%')
+      .height('100%')
     }
-    .width('100%')
-    .height('100%')
+    .hideTitleBar(true)
+    // 🌟 核心 4：在 onReady 生命周期中安全地获取跳转参数
+    .onReady((context: NavDestinationContext) => {
+      let params = context.pathInfo.param as Record<string, string>;
+      if (params) {
+        this.contactName = params['name'] || '聊天';
+        this.contactId = params['id'] || '';
+      }
+      this.loadHistory();
+    })
   }
 }

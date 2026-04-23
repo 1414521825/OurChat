@@ -1,9 +1,11 @@
 import { MessageItem } from '../models/MessageModel';
+import { ChatRouteParams } from '../models/params/CharRouteParams';
 import MessageViewModel from '../viewmodels/MessageViewModel';
 
 @Component
 struct MessageListItem {
   @ObjectLink item: MessageItem;
+  @Consume('pageStack') pageStack: NavPathStack;
 
   build() {
     Row() {
@@ -24,13 +26,8 @@ struct MessageListItem {
         // 通知ViewModel清空红点数据
         MessageViewModel.clearUnreadCount(this.item.id);
       }
-      this.getUIContext().getRouter().pushUrl({
-        url: 'pages/ChatDetail',
-        params: {
-          id: this.item.id,
-          name: this.item.name
-        }
-      })
+      let params = new ChatRouteParams('123', '小王');
+      this.pageStack.pushPathByName('ChatDetail', params);
     })
   }
 }
