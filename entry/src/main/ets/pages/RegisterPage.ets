@@ -3,30 +3,26 @@ import { promptAction } from '@kit.ArkUI';
 
 @Entry
 @Component
-export struct LoginPage {
-  // 表单状态：用户名、密码、加载中
+export struct RegisterPage {
   @State username: string = '';
   @State password: string = '';
+  @State confirmPassword: string = '';
   @State isLoading: boolean = false;
-  // 登录成功后回调，通知父组件切换页面
-  onLoginSuccess?: () => void;
-  // 点击「去注册」时回调
-  onGoRegister?: () => void;
+  onRegisterSuccess?: () => void;
+  onGoLogin?: () => void;
 
-  async handleLogin() {
-    // 防止重复点击
+  async handleRegister() {
     if (this.isLoading) {
       return;
     }
     this.isLoading = true;
 
-    const result = await AuthViewModel.login(this.username, this.password);
+    const result = await AuthViewModel.register(this.username, this.password, this.confirmPassword);
     this.isLoading = false;
 
     if (result.success) {
       promptAction.showToast({ message: result.message, duration: 2000 });
-      // 通知 Index 登录成功，切换到主界面
-      this.onLoginSuccess?.();
+      this.onRegisterSuccess?.();
     } else {
       promptAction.showToast({ message: result.message, duration: 2000 });
     }
@@ -36,17 +32,17 @@ export struct LoginPage {
     Column() {
       // ========== 顶部标题区 ==========
       Column() {
-        Text('OurChat')
-          .fontSize(36)
+        Text('创建账号')
+          .fontSize(28)
           .fontWeight(FontWeight.Bold)
           .fontColor('#007DFF')
           .margin({ bottom: 8 })
 
-        Text('遇见你的那个TA')
+        Text('加入 OurChat，遇见新朋友')
           .fontSize(15)
           .fontColor('#999999')
       }
-      .margin({ top: 120, bottom: 64 })
+      .margin({ top: 100, bottom: 56 })
 
       // ========== 中间表单区 ==========
       Column() {
@@ -71,9 +67,21 @@ export struct LoginPage {
           .backgroundColor('#F5F5F5')
           .borderRadius(10)
           .padding({ left: 16, right: 16 })
+          .margin({ bottom: 16 })
+
+        TextInput({ placeholder: '请再次输入密码', text: this.confirmPassword })
+          .onChange((value: string) => {
+            this.confirmPassword = value;
+          })
+          .type(InputType.Password)
+          .width('100%')
+          .height(50)
+          .backgroundColor('#F5F5F5')
+          .borderRadius(10)
+          .padding({ left: 16, right: 16 })
           .margin({ bottom: 36 })
 
-        Button(this.isLoading ? '登录中…' : '登 录')
+        Button(this.isLoading ? '注册中…' : '注 册')
           .width('100%')
           .height(50)
           .fontSize(17)
@@ -82,22 +90,22 @@ export struct LoginPage {
           .backgroundColor(this.isLoading ? '#99CFFF' : '#007DFF')
           .borderRadius(25)
           .onClick(() => {
-            this.handleLogin();
+            this.handleRegister();
           })
       }
       .width('100%')
       .padding({ left: 32, right: 32 })
 
-      // ========== 底部跳转注册区 ==========
+      // ========== 底部跳转登录区 ==========
       Row() {
-        Text('没有账号？')
+        Text('已有账号？')
           .fontSize(14)
           .fontColor('#999999')
-        Text('去注册')
+        Text('去登录')
           .fontSize(14)
           .fontColor('#007DFF')
           .onClick(() => {
-            this.onGoRegister?.();
+            this.onGoLogin?.();
           })
       }
       .margin({ top: 32 })

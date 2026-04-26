@@ -2,6 +2,7 @@ import { MessagePage } from "../views/MessagePage";
 import { ProfilePage } from "../views/ProfilePage";
 import { ChatDetail } from "./ChatDetail";
 import { LoginPage } from "./LoginPage";
+import { RegisterPage } from "./RegisterPage";
 import { TokenManager } from "../utils/TokenManager";
 
 @Entry
@@ -12,6 +13,8 @@ struct Index {
   // 🌟 登录状态控制
   @State isLoggedIn: boolean = false;
   @State isChecking: boolean = true;
+  // 控制显示登录页还是注册页
+  @State showRegister: boolean = false;
   private tabsController: TabsController = new TabsController();
   // 🌟 核心 1：初始化路由栈
   @Provide('pageStack') pageStack: NavPathStack = new NavPathStack();
@@ -57,13 +60,27 @@ struct Index {
       .justifyContent(FlexAlign.Center)
       .backgroundColor('#FFFFFF')
     }
-    // ========== 2. 未登录，显示登录页 ==========
+    // ========== 2. 未登录，根据 showRegister 切换登录/注册页 ==========
     else if (!this.isLoggedIn) {
-      LoginPage({
-        onLoginSuccess: () => {
-          this.isLoggedIn = true;
-        }
-      })
+      if (this.showRegister) {
+        RegisterPage({
+          onRegisterSuccess: () => {
+            this.isLoggedIn = true;
+          },
+          onGoLogin: () => {
+            this.showRegister = false;
+          }
+        })
+      } else {
+        LoginPage({
+          onLoginSuccess: () => {
+            this.isLoggedIn = true;
+          },
+          onGoRegister: () => {
+            this.showRegister = true;
+          }
+        })
+      }
     }
     // ========== 3. 已登录，显示主界面 ==========
     else {

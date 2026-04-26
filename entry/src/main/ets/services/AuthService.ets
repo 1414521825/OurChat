@@ -1,5 +1,5 @@
 import { http } from '@kit.NetworkKit';
-import { LoginRequest, ApiResponse, LoginData } from '../models/LoginModel';
+import { LoginRequest, RegisterRequest, ApiResponse, LoginData } from '../models/LoginModel';
 
 // TODO: 替换为你的后端服务器地址
 const BASE_URL = 'https://your-server.com';
@@ -35,6 +35,33 @@ class AuthService {
       }
     } finally {
       // 5. 无论成功还是失败，都要销毁客户端释放资源
+      httpRequest.destroy();
+    }
+  }
+
+  async register(request: RegisterRequest): Promise<LoginData> {
+    const httpRequest = http.createHttp();
+
+    try {
+      const response = await httpRequest.request(
+        `${BASE_URL}/api/auth/register`,
+        {
+          method: http.RequestMethod.POST,
+          header: { 'Content-Type': 'application/json' },
+          extraData: JSON.stringify(request),
+          connectTimeout: 10000,
+          readTimeout: 10000
+        }
+      );
+
+      const result: ApiResponse<LoginData> = JSON.parse(response.result as string);
+
+      if (result.code === 0) {
+        return result.data;
+      } else {
+        throw new Error(result.message || '注册失败');
+      }
+    } finally {
       httpRequest.destroy();
     }
   }
