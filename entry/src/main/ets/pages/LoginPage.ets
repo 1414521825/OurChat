@@ -1,7 +1,6 @@
 import AuthViewModel from '../viewmodels/AuthViewModel';
 import { promptAction } from '@kit.ArkUI';
 
-@Entry
 @Component
 export struct LoginPage {
   // 表单状态：用户名、密码、加载中
@@ -16,6 +15,7 @@ export struct LoginPage {
   async handleLogin() {
     // 防止重复点击
     if (this.isLoading) {
+
       return;
     }
     this.isLoading = true;
@@ -101,6 +101,22 @@ export struct LoginPage {
           })
       }
       .margin({ top: 32 })
+
+      // TODO: 后端登录 API 就绪后删掉这行
+      Text('开发登录 (跳过API)')
+        .fontSize(13)
+        .fontColor('#CCCCCC')
+        .margin({ top: 24 })
+        .onClick(async () => {
+          if (this.isLoading) return;
+          this.isLoading = true;
+          const result = await AuthViewModel.loginDev();
+          this.isLoading = false;
+          if (result.success) {
+            promptAction.showToast({ message: result.message, duration: 2000 });
+            this.onLoginSuccess?.();
+          }
+        })
     }
     .width('100%')
     .height('100%')

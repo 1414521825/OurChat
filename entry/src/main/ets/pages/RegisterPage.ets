@@ -1,7 +1,6 @@
 import AuthViewModel from '../viewmodels/AuthViewModel';
 import { promptAction } from '@kit.ArkUI';
 
-@Entry
 @Component
 export struct RegisterPage {
   @State username: string = '';

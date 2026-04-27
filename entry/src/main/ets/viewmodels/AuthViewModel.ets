@@ -52,6 +52,13 @@ class AuthViewModel {
     }
   }
 
+  // 开发用：跳过真实 API，直接写入假 token 进入主界面。后端好了删掉这个方法
+  async loginDev(): Promise<LoginResult> {
+    await TokenManager.saveToken('dev-token-123');
+    await TokenManager.saveUserId('dev-user-1');
+    return new LoginResult(true, '开发登录成功');
+  }
+
   async logout(): Promise<LoginResult> {
     const userId = await TokenManager.getUserId();
 

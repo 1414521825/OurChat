@@ -1,10 +1,22 @@
 import { UserProfile } from '../models/ProfileModel';
 import ProfileService from '../services/ProfileService';
+import { TokenManager } from '../utils/TokenManager';
 
 class ProfileViewModel {
-  // 获取当前登录用户的个人信息
+  // View 可以通过这个字段判断当前数据是否来自缓存
+  fromCache: boolean = false;
+
   async getMyProfile(): Promise<UserProfile> {
-    return await ProfileService.fetchMyProfile();
+    try {
+      const token = await TokenManager.getToken();
+      const profile = await ProfileService.fetchMyProfile(token);
+      this.fromCache = ProfileService.isFromCache(profile);
+      return profile;
+    } catch (e) {
+      console.error('获取个人资料失败：' + (e as Error).message);
+      this.fromCache = false;
+      return new UserProfile('', '', '');
+    }
   }
 }
 

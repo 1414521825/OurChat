@@ -42,6 +42,8 @@ struct MenuListItem {
 export struct ProfilePage {
   @State profile: UserProfile = new UserProfile('', '', '');
   @State isLoading: boolean = true;
+  @State hasError: boolean = false;
+  @State isCached: boolean = false;
   private promptAction: PromptAction = new PromptAction();
   // 添加回调，方便通知首页，用户已经登出
   onLogoutSuccess?: () => void;
@@ -51,9 +53,15 @@ export struct ProfilePage {
   }
 
   async loadProfile() {
-    let data = await ProfileViewModel.getMyProfile();
-    this.profile = data;
+    const data = await ProfileViewModel.getMyProfile();
     this.isLoading = false;
+    if (data.id === '') {
+      this.hasError = true;
+    } else {
+      this.profile = data;
+      this.hasError = false;
+      this.isCached = ProfileViewModel.fromCache;
+    }
   }
 
   build() {
@@ -63,6 +71,28 @@ export struct ProfilePage {
         Column() {
           LoadingProgress().width(40).height(40).color('#007DFF')
           Text('加载中...').fontSize(14).fontColor('#999999').margin({ top: 12 })
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Center)
+      } else if (this.hasError) {
+        // ----- 出错态 -----
+        Column() {
+          Text('😵')
+            .fontSize(48)
+            .margin({ bottom: 12 })
+          Text('加载失败')
+            .fontSize(16)
+            .fontColor('#1A1A1A')
+            .margin({ bottom: 8 })
+          Text('点击重试')
+            .fontSize(14)
+            .fontColor('#007DFF')
+            .onClick(() => {
+              this.isLoading = true;
+              this.hasError = false;
+              this.loadProfile();
+            })
         }
         .width('100%')
         .layoutWeight(1)
@@ -94,12 +124,23 @@ export struct ProfilePage {
               }
               .margin({ top: -40 })
 
-              // 昵称
-              Text(this.profile.name)
-                .fontSize(22)
-                .fontWeight(FontWeight.Bold)
-                .fontColor('#1A1A1A')
-                .margin({ top: 12 })
+              // 昵称（缓存数据时显示提示）
+              Row() {
+                Text(this.profile.name)
+                  .fontSize(22)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#1A1A1A')
+                if (this.isCached) {
+                  Text('离线数据')
+                    .fontSize(11)
+                    .fontColor('#FF9500')
+                    .backgroundColor('#FFF3E0')
+                    .borderRadius(4)
+                    .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                    .margin({ left: 8 })
+                }
+              }
+              .margin({ top: 12 })
 
               // 个性签名（可点击编辑）
               Row() {
