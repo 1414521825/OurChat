@@ -1,22 +1,42 @@
+import { http } from '@kit.NetworkKit';
 import { MessageItem } from '../models/MessageModel';
+import { ApiResponse } from '../models/LoginModel';
+
+// TODO: 替换为你的后端服务器地址
+const BASE_URL = 'https://your-server.com';
 
 class MessageService {
-  // 模拟从服务器发起网络请求获取数据
-  async fetchChatListFromServer(): Promise<MessageItem[]> {
-    // 真实开发中，这里会使用鸿蒙的 @ohos.net.http 发起真实的请求
-    console.info("Service: 正在向服务器请求数据...");
+  async fetchChatListFromServer(token: string): Promise<MessageItem[]> {
+    const httpRequest = http.createHttp();
 
-    // 我们用 setTimeout 模拟网络延迟（比如等 1 秒钟）
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let fakeData = [
-          new MessageItem('1', 'Alice', '你好呀！很高兴认识你~', '10:30', 2),
-          new MessageItem('2', 'Bob', '周末去哪里玩？', '昨天', 0),
-          new MessageItem('3', 'Charlie', '代码写完了吗？', '星期一', 5)
-        ];
-        resolve(fakeData);
-      }, 1000); // 模拟 1000 毫秒的请求时间
-    });
+    try {
+      const response = await httpRequest.request(
+        `${BASE_URL}/api/messages/list`,
+        {
+          method: http.RequestMethod.GET,
+          header: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`  // 鉴权头，后端通过它识别当前用户
+          },
+          connectTimeout: 10000,
+          readTimeout: 10000
+        }
+      );
+
+      const result: ApiResponse<MessageItem[]> = JSON.parse(response.result as string);
+
+      if (result.code === 0) {
+        // JSON.parse 生成的是普通对象，必须转成 MessageItem 实例，
+        // 因为 @Observed 装饰的类需要真正的类实例才能被 @ObjectLink 追踪
+        return result.data.map((item: MessageItem) =>
+          new MessageItem(item.id, item.name, item.lastMessage, item.time, item.unreadCount)
+        );
+      } else {
+        throw new Error(result.message || '获取消息列表失败');
+      }
+    } finally {
+      httpRequest.destroy();
+    }
   }
 }
 

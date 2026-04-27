@@ -1,6 +1,7 @@
 import AuthService from '../services/AuthService';
 import { TokenManager } from '../utils/TokenManager';
-import { LoginRequest, RegisterRequest, LoginResult } from '../models/LoginModel';
+import { LoginRequest, RegisterRequest, LoginResult, LogoutRequest } from '../models/LoginModel';
+import MessageViewModel from './MessageViewModel';
 
 class AuthViewModel {
   async login(username: string, password: string): Promise<LoginResult> {
@@ -49,6 +50,24 @@ class AuthViewModel {
       const msg = (e as Error).message || '网络请求失败，请稍后重试';
       return new LoginResult(false, msg);
     }
+  }
+
+  async logout(): Promise<LoginResult> {
+    const userId = await TokenManager.getUserId();
+
+    // 第 1 步：立刻清除本地 token 和所有缓存，让用户直接退出
+    await TokenManager.clear();
+    MessageViewModel.clear();
+
+    // 第 2 步：异步通知后端，不阻塞 UI（fire-and-forget）
+    if (userId) {
+      const request = new LogoutRequest(userId);
+      AuthService.logout(request).catch((e: Error) => {
+        console.error('后端退登通知失败：' + e.message);
+      });
+    }
+
+    return new LoginResult(true, '已退出登录');
   }
 }
 

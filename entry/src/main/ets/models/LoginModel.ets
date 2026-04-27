@@ -9,6 +9,14 @@ export class LoginRequest {
   }
 }
 
+export class LogoutRequest {
+  userId: string;
+
+  constructor(userId: string) {
+    this.userId = userId;
+  }
+}
+
 // 发送给后端注册接口的请求体（字段和登录一样，但独立成一个类方便后续扩展）
 export class RegisterRequest {
   username: string;
@@ -44,3 +52,4 @@ export class LoginResult {
     this.message = message;
   }
 }
+

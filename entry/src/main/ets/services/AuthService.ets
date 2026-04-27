@@ -1,5 +1,5 @@
 import { http } from '@kit.NetworkKit';
-import { LoginRequest, RegisterRequest, ApiResponse, LoginData } from '../models/LoginModel';
+import { LoginRequest, RegisterRequest, ApiResponse, LoginData, LogoutRequest } from '../models/LoginModel';
 
 // TODO: 替换为你的后端服务器地址
 const BASE_URL = 'https://your-server.com';
@@ -61,6 +61,26 @@ class AuthService {
       } else {
         throw new Error(result.message || '注册失败');
       }
+    } finally {
+      httpRequest.destroy();
+    }
+  }
+
+  async logout(request: LogoutRequest): Promise<void> {
+    const httpRequest = http.createHttp();
+
+    try {
+      await httpRequest.request(
+        `${BASE_URL}/api/auth/logout`,
+        {
+          method: http.RequestMethod.POST,
+          header: { 'Content-Type': 'application/json' },
+          extraData: JSON.stringify(request),
+          connectTimeout: 10000,
+          readTimeout: 10000
+        }
+      );
+      // fire-and-forget 模式：不关心后端返回，请求发出即可
     } finally {
       httpRequest.destroy();
     }

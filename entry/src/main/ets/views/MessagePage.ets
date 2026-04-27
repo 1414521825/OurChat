@@ -101,21 +101,35 @@ export struct MessagePage {
         .justifyContent(FlexAlign.Center)
 
       } else {
-        // 加载完毕后，显示下拉刷新和列表
-        // 4. 使用 Refresh 组件包裹 List，实现下拉刷新
+        // 4. 使用 Refresh 组件包裹内容，下拉刷新总是可用
         Refresh({ refreshing: $$this.isRefreshing }) {
-          List({ space: 0 }) {
-            ForEach(this.chatList, (item: MessageItem) => {
-              ListItem() {
-                MessageListItem({item: item})
-              }
-            }, (item: MessageItem) => item.id)
+          if (this.chatList.length === 0) {
+            // 空状态：可能是网络失败或真没数据，下拉可重试
+            Column() {
+              Text('暂无消息')
+                .fontSize(16)
+                .fontColor('#999999')
+              Text('下拉刷新重试')
+                .fontSize(13)
+                .fontColor('#CCCCCC')
+                .margin({ top: 8 })
+            }
+            .width('100%')
+            .layoutWeight(1)
+            .justifyContent(FlexAlign.Center)
+          } else {
+            List({ space: 0 }) {
+              ForEach(this.chatList, (item: MessageItem) => {
+                ListItem() {
+                  MessageListItem({item: item})
+                }
+              }, (item: MessageItem) => item.id)
+            }
+            .width('100%')
+            .layoutWeight(1)
           }
-          .width('100%')
-          .layoutWeight(1)
         }
         .onRefreshing(() => {
-          // 5. 当用户下拉时，触发 onRefreshing 事件，重新去服务器拉数据
           this.loadData();
         })
         .layoutWeight(1)

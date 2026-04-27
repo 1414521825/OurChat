@@ -1,6 +1,7 @@
 import { UserProfile } from '../models/ProfileModel';
 import ProfileViewModel from '../viewmodels/ProfileViewModel';
 import { PromptAction } from "@kit.ArkUI";
+import AuthViewModel from "../viewmodels/AuthViewModel";
 
 // 菜单列表项子组件
 @Component
@@ -42,6 +43,8 @@ export struct ProfilePage {
   @State profile: UserProfile = new UserProfile('', '', '');
   @State isLoading: boolean = true;
   private promptAction: PromptAction = new PromptAction();
+  // 添加回调，方便通知首页，用户已经登出
+  onLogoutSuccess?: () => void;
 
   aboutToAppear() {
     this.loadProfile();
@@ -168,8 +171,10 @@ export struct ProfilePage {
               .fontSize(16)
               .borderRadius(12)
               .margin({ top: 24, left: 16, right: 16 })
-              .onClick(() => {
-                this.promptAction.showToast({ message: '退出登录功能开发中', duration: 1500 });
+              .onClick(async () => {
+                const result = await AuthViewModel.logout();
+                this.promptAction.showToast({ message: result.message, duration: 2000 });
+                this.onLogoutSuccess?.();
               })
 
             // 底部留白

@@ -105,7 +105,11 @@ struct Index {
           .tabBar(this.TabBuilder('消息', 1))
 
           TabContent() {
-            ProfilePage()
+            ProfilePage({
+              onLogoutSuccess: () => {
+                this.isLoggedIn = false;
+              }
+            })
           }
           .tabBar(this.TabBuilder('我的', 2))
         }

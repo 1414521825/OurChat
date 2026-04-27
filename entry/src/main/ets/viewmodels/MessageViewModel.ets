@@ -1,17 +1,18 @@
 import { MessageItem } from '../models/MessageModel';
 import MessageService from '../services/MessageService';
+import { TokenManager } from '../utils/TokenManager';
 
 class MessageViewModel {
   private chatListData: MessageItem[] = [];
 
-  // 获取数据的方法变成了异步的，因为它要等 Service 把数据取回来
   async getChatList(): Promise<MessageItem[]> {
-    // 调用 Service 层真正获取数据
-    this.chatListData = await MessageService.fetchChatListFromServer();
-
-    // 如果拿到数据后需要做些特殊处理（比如过滤黑名单用户），也是在这里做
-    // ...
-
+    try {
+      const token = await TokenManager.getToken();
+      this.chatListData = await MessageService.fetchChatListFromServer(token);
+    } catch (e) {
+      console.error('获取消息列表失败：' + (e as Error).message);
+      this.chatListData = [];  // 失败返回空列表，UI 不至于崩溃
+    }
     return this.chatListData;
   }
 
@@ -25,6 +26,11 @@ class MessageViewModel {
   // 在 MessageViewModel.ets 里加上这个同步方法用于本地刷新
   getChatListSync(): MessageItem[] {
     return this.chatListData;
+  }
+
+  // 退出后清空聊天缓存
+  clear() {
+    this.chatListData.length = 0;
   }
 }
 
